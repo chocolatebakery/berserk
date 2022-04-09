@@ -21,6 +21,7 @@
 #include "attacks.h"
 #include "bits.h"
 #include "board.h"
+#include "endgame.h"
 #include "nn.h"
 #include "search.h"
 #include "uci.h"
@@ -91,6 +92,13 @@ Score FRCCorneredBishop(Board* board) {
 // Main evalution method
 Score Evaluate(Board* board, ThreadData* thread) {
   if (IsMaterialDraw(board)) return 0;
+
+  if (bits(OccBB(BOTH)) == 3) {
+    Score eval = EvaluateKXK(board);
+
+    if (eval != UNKNOWN)
+      return eval;
+  }
 
   SearchData* data = &thread->data;
   int16_t* stm = board->accumulators[board->stm][board->ply];
