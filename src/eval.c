@@ -91,14 +91,8 @@ Score FRCCorneredBishop(Board* board) {
 
 // Main evalution method
 Score Evaluate(Board* board, ThreadData* thread) {
-  if (IsMaterialDraw(board)) return 0;
-
-  if (bits(OccBB(BOTH)) == 3) {
-    Score eval = EvaluateKXK(board);
-
-    if (eval != UNKNOWN)
-      return eval;
-  }
+  Score knownEval = EvaluateKnownPositions(board);
+  if (knownEval != UNKNOWN) return knownEval;
 
   SearchData* data = &thread->data;
   int16_t* stm = board->accumulators[board->stm][board->ply];
@@ -108,12 +102,12 @@ Score Evaluate(Board* board, ThreadData* thread) {
 
   // sf cornered bishop in FRC
   if (CHESS_960) score += FRCCorneredBishop(board);
-  
+
   // static contempt
   score += data->contempt[board->stm];
 
   // scaled based on phase [1, 1.5]
   score = (128 + board->phase) * score / 128;
-  
+
   return min(TB_WIN_BOUND - 1, max(-TB_WIN_BOUND + 1, score));
 }

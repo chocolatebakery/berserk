@@ -19,6 +19,8 @@
 
 #include "types.h"
 
+extern const int SEE_VALUE[7];
+
 int SEE(Board* board, Move move, int threshold);
 
 #endif

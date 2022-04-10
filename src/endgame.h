@@ -18,24 +18,18 @@
 #define ENDGAME_H
 
 #include "types.h"
+#include "util.h"
 
 #define WINNING_ENDGAME 20000
 
-#define WINNING_KXK_PAWN_ENDGAME_OFFSET 0
-#define WINNING_KXK_PAWN_QUEENING_OFFSET 10
-#define WINNING_KXK_PAWN_KING_OFFSET 2
-
-#define WINNING_KXK_MAJOR_ENDGAME_OFFSET \
-  (WINNING_KXK_PAWN_ENDGAME_OFFSET + WINNING_KXK_PAWN_QUEENING_OFFSET * 10 + WINNING_KXK_PAWN_KING_OFFSET * 10)
-
-#define WINNING_ENDGAME_LOSING_KING_RANK_OFFSET 2
-#define WINNING_ENDGAME_LOSING_KING_FILE_OFFSET WINNING_ENDGAME_LOSING_KING_RANK_OFFSET
-#define WINNING_ENDGAME_WINNING_KING_DIS_OFFSET 10
-
-int EvaluateKXK(Board* board);
+int MaterialValue(Board* board, const int side);
+int EvaluateKPK(Board* board, const int winningSide);
+int EvaluateKXK(Board* board, const int winningSide);
+int EvaluateKBNK(Board* board, const int winningSide);
+int EvaluateKnownPositions(Board* board);
 
 uint8_t GetKPKBit(uint32_t bit);
-uint32_t KPKIndex(int ssKing, int wsKing, int p, int stm);
-uint8_t KPKDraw(int ss, int ssKing, int wsKing, int p, int stm);
+uint32_t KPKIndex(int winningKing, int losingKing, int pawn, int stm);
+uint8_t KPKDraw(int winningSide, int winningKing, int losingKing, int pawn, int stm);
 
 #endif

@@ -33,6 +33,7 @@
 #define Rank(sq) ((sq) >> 3)
 #define Sq(r, f) ((r)*8 + (f))
 #define Distance(a, b) max(abs(Rank(a) - Rank(b)), abs(File(a) - File(b)))
+#define MDistance(a, b) (abs(Rank(a) - Rank(b)) + abs(File(a) - File(b)))
 
 extern const int8_t PSQT[];
 extern const int16_t PC_FEATURE_OFFSET[2][12];
