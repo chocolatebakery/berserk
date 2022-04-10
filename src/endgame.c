@@ -58,39 +58,29 @@ inline int EvaluateKXK(Board* board, const int winningSide) {
 
   int winningKing = lsb(PieceBB(KING, winningSide));
   int losingKing = lsb(PieceBB(KING, losingSide));
-  int losingKingRankDis = Rank(losingKing) ^ (7 * (Rank(losingKing) > 3));
-  int losingKingFileDis = File(losingKing) ^ (7 * (File(losingKing) > 3));
+  int losingKingRankDist = min(Rank(losingKing), 7 - Rank(losingKing));
+  int losingKingFileDist = min(File(losingKing), 7 - File(losingKing));
 
-  eval += 10 * (7 - Distance(winningKing, losingKing)) + 2 * (6 - losingKingFileDis - losingKingRankDis);
-
-  return winningSide == board->stm ? eval : -eval;
-}
-
-int EvaluateKBNK(Board* board, const int winningSide) {
-  const int losingSide = winningSide ^ 1;
-  int eval = WINNING_ENDGAME + MaterialValue(board, winningSide);
-
-  int winningKing = lsb(PieceBB(KING, winningSide));
-  int losingKing = lsb(PieceBB(KING, losingSide));
-
-  eval += (7 - Distance(winningKing, losingKing));
-
-  // special logic for forcing the enemy king into the right colored corner
-  if (DARK_SQS & PieceBB(BISHOP, winningSide)) {
-    int cornerDistance = min(MDistance(losingKing, A1), MDistance(losingKing, H8));
-    eval += 50 * (7 - cornerDistance);
-  } else {
-    int cornerDistance = min(MDistance(losingKing, A8), MDistance(losingKing, H1));
-    eval += 50 * (7 - cornerDistance);
-  }
+  eval += 10 * (7 - Distance(winningKing, losingKing)) + 6 - losingKingFileDist - losingKingRankDist;
 
   return winningSide == board->stm ? eval : -eval;
 }
 
 int EvaluateKnownPositions(Board* board) {
-  if (IsMaterialDraw(board)) return 0;
-
   switch (board->piecesCounts) {
+    // See IsMaterialDraw
+    case 0x0:       // Kk
+    case 0x100:     // KNk
+    case 0x200:     // KNNk
+    case 0x1000:    // Kkn
+    case 0x2000:    // Kknn
+    case 0x1100:    // KNkn
+    case 0x10000:   // KBk
+    case 0x100000:  // Kkb
+    case 0x11000:   // KBkn
+    case 0x100100:  // KNkb
+    case 0x110000:  // KBkb
+      return 0;
     case 0x1:  // KPk
       return EvaluateKPK(board, WHITE);
     case 0x10:  // Kpk
@@ -101,16 +91,9 @@ int EvaluateKnownPositions(Board* board) {
     case 0x10000000:    // Krk
     case 0x1000000000:  // Kqk
       return EvaluateKXK(board, BLACK);
-    case 0x10100: // KBNk
-      return EvaluateKBNK(board, WHITE);
-    case 0x101000: // Kbnk
-      return EvaluateKBNK(board, BLACK);
     default:
       break;
   }
-
-  if (!(OccBB(BLACK) ^ PieceBB(KING, BLACK))) return EvaluateKXK(board, WHITE);
-  if (!(OccBB(WHITE) ^ PieceBB(KING, WHITE))) return EvaluateKXK(board, BLACK);
 
   return UNKNOWN;
 }
