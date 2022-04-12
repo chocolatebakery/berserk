@@ -348,7 +348,7 @@ void GenerateCastles(MoveList* moveList, Board* board) {
   // validate it's still possible, and that nothing is in the way
   // square attack logic is applied later
   if (board->stm == WHITE) {
-    int kingSq = lsb(PieceBB(KING, WHITE));
+    int kingSq = board->kings[WHITE];
     if (board->castling & 0x8 && !getBit(board->pinned, board->castleRooks[0])) {
       BitBoard between =
           GetInBetweenSquares(kingSq, G1) | GetInBetweenSquares(board->castleRooks[0], F1) | bit(G1) | bit(F1);
@@ -363,7 +363,7 @@ void GenerateCastles(MoveList* moveList, Board* board) {
         AppendMove(moveList->quiet, &moveList->nQuiets, BuildMove(kingSq, C1, Piece(KING, board->stm), 0, 0, 0, 0, 1));
     }
   } else {
-    int kingSq = lsb(PieceBB(KING, BLACK));
+    int kingSq = board->kings[BLACK];
     if (board->castling & 0x2 && !getBit(board->pinned, board->castleRooks[2])) {
       BitBoard between =
           GetInBetweenSquares(kingSq, G8) | GetInBetweenSquares(board->castleRooks[2], F8) | bit(G8) | bit(F8);
@@ -406,7 +406,7 @@ void GenerateAllKingMoves(MoveList* moveList, Board* board) {
 }
 
 void GenerateAllMoves(MoveList* moveList, Board* board) {
-  int kingSq = lsb(PieceBB(KING, board->stm));
+  int kingSq = board->kings[board->stm];
 
   if (bits(board->checkers) > 1) {
     GenerateAllKingMoves(moveList, board);
@@ -481,7 +481,7 @@ void GenerateAllMoves(MoveList* moveList, Board* board) {
 
 // captures and promotions
 void GenerateTacticalMoves(MoveList* moveList, Board* board) {
-  int kingSq = lsb(PieceBB(KING, board->stm));
+  int kingSq = board->kings[board->stm];
 
   if (bits(board->checkers) > 1) {
     // double check means only king moves are possible
@@ -559,7 +559,7 @@ void GenerateTacticalMoves(MoveList* moveList, Board* board) {
 }
 
 void GenerateQuietMoves(MoveList* moveList, Board* board) {
-  int kingSq = lsb(PieceBB(KING, board->stm));
+  int kingSq = board->kings[board->stm];
 
   if (bits(board->checkers) > 1) {
     // double check, only king moves

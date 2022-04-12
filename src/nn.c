@@ -50,7 +50,7 @@ int16_t OUTPUT_WEIGHTS[2 * N_HIDDEN] __attribute__((aligned(ALIGN_ON)));
 int32_t OUTPUT_BIAS;
 
 inline void RefreshAccumulator(Accumulator accumulator, Board* board, const int perspective) {
-  int kingSq = lsb(PieceBB(KING, perspective));
+  int kingSq = board->kings[perspective];
 
   memcpy(accumulator, INPUT_BIASES, sizeof(Accumulator));
 

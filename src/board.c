@@ -88,6 +88,7 @@ void ClearBoard(Board* board) {
   memset(board->halfMoveHistory, 0, sizeof(board->halfMoveHistory));
 
   for (int i = 0; i < 64; i++) board->squares[i] = NO_PIECE;
+  board->kings[WHITE] = board->kings[BLACK] = -1;
 
   board->piecesCounts = 0ULL;
   board->zobrist = 0ULL;
@@ -113,7 +114,12 @@ void ParseFen(char* fen, Board* board) {
 
       board->phase += PHASE_VALUES[PieceType(piece)];
 
-      if (*fen != 'K' && *fen != 'k') board->piecesCounts += PIECE_COUNT_IDX[piece];
+      if (*fen != 'K' && *fen != 'k')
+        board->piecesCounts += PIECE_COUNT_IDX[piece];
+      else if (*fen == 'K')
+        board->kings[WHITE] = i;
+      else
+        board->kings[BLACK] = i;
     } else if (*fen >= '0' && *fen <= '9') {
       int offset = *fen - '1';
       i += offset;
@@ -295,7 +301,7 @@ inline void SetOccupancies(Board* board) {
 // Special pieces are those giving check, and those that are pinned
 // these must be recalculated every move for faster move legality purposes
 inline void SetSpecialPieces(Board* board) {
-  int kingSq = lsb(PieceBB(KING, board->stm));
+  int kingSq = board->kings[board->stm];
 
   // Reset pinned pieces
   board->pinned = 0;
@@ -306,7 +312,7 @@ inline void SetSpecialPieces(Board* board) {
   // for each side
   for (int kingColor = WHITE; kingColor <= BLACK; kingColor++) {
     int enemyColor = 1 - kingColor;
-    kingSq = lsb(PieceBB(KING, kingColor));
+    kingSq = board->kings[kingColor];
 
     // get full rook/bishop rays from the king that intersect that piece type of the enemy
     BitBoard enemyPiece = ((PieceBB(BISHOP, enemyColor) | PieceBB(QUEEN, enemyColor)) & GetBishopAttacks(kingSq, 0)) |
@@ -348,8 +354,8 @@ void MakeMoveUpdate(Move move, Board* board, int update) {
   int castle = IsCas(move);
   int captured = board->squares[to];
 
-  int wkingSq = lsb(PieceBB(KING, WHITE));
-  int bkingSq = lsb(PieceBB(KING, BLACK));
+  int wkingSq = board->kings[WHITE];
+  int bkingSq = board->kings[BLACK];
 
   // store hard to recalculate values
   board->zobristHistory[board->moveNo] = board->zobrist;
@@ -377,6 +383,8 @@ void MakeMoveUpdate(Move move, Board* board, int update) {
     board->halfMove = 0;  // reset on pawn move
   else
     board->halfMove++;
+
+  if (piece == Piece(KING, board->stm)) board->kings[board->stm] = to;
 
   if (capture && !ep) {
     board->captureHistory[board->moveNo] = captured;
@@ -549,6 +557,8 @@ void UndoMove(Move move, Board* board) {
   board->halfMove = board->halfMoveHistory[board->moveNo];
   board->checkers = board->checkersHistory[board->moveNo];
   board->pinned = board->pinnedHistory[board->moveNo];
+
+  if (piece == Piece(KING, board->stm)) board->kings[board->stm] = from;
 
   if (!promoted)
     flipBits(board->pieces[piece], to, from);
@@ -731,10 +741,10 @@ int MoveIsLegal(Move move, Board* board) {
   if (IsCas(move) && (PieceType(piece) != KING || IsCap(move))) return 0;
 
   BitBoard possible = -1ULL;
-  if (getBit(board->pinned, from)) possible &= GetPinnedMovementSquares(from, lsb(PieceBB(KING, board->stm)));
+  if (getBit(board->pinned, from)) possible &= GetPinnedMovementSquares(from, board->kings[board->stm]);
 
   if (board->checkers)
-    possible &= GetInBetweenSquares(lsb(board->checkers), lsb(PieceBB(KING, board->stm))) | board->checkers;
+    possible &= GetInBetweenSquares(lsb(board->checkers), board->kings[board->stm]) | board->checkers;
 
   if (bits(board->checkers) > 1 && PieceType(piece) != KING) return 0;
 
@@ -778,7 +788,7 @@ int MoveIsLegal(Move move, Board* board) {
   if (IsCas(move)) {
     if (board->checkers) return 0;
 
-    int kingSq = lsb(PieceBB(KING, board->stm));
+    int kingSq = board->kings[board->stm];
 
     if (from != kingSq) return 0;
 
@@ -837,7 +847,7 @@ int IsMoveLegal(Move move, Board* board) {
 
   if (IsEP(move)) {
     // ep is checked by just applying the move
-    int kingSq = lsb(PieceBB(KING, board->stm));
+    int kingSq = board->kings[board->stm];
     int captureSq = to - PawnDir(board->stm);
     BitBoard newOccupancy = OccBB(BOTH);
     popBit(newOccupancy, from);

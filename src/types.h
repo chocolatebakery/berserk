@@ -63,7 +63,8 @@ typedef struct {
   uint64_t zobrist;       // zobrist hash of the position
 
   Accumulator* accumulators[2];
-
+  
+  int kings[2];             // king squares
   int squares[64];          // piece per square
   BitBoard occupancies[3];  // 0 - white pieces, 1 - black pieces, 2 - both
   BitBoard pieces[13];      // individual piece data
